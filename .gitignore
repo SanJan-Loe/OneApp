@@ -1,25 +1,70 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# ================
+# Go 语言相关
+# ================
+# 二进制可执行文件
 *.exe
-*.exe~
 *.dll
 *.so
 *.dylib
+bin/             # Go 编译输出的二进制目录
+pkg/             # Go 编译缓存目录
+vendor/          # Go 模块本地依赖目录（如果使用 go mod 通常不需要提交）
 
-# Test binary, built with `go test -c`
-*.test
+# 测试相关文件
+*.test           # 测试生成的二进制文件
+*.out            # 覆盖率报告输出文件
+coverage/        # 测试覆盖率报告目录
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# ================
+# Node.js 相关
+# ================
+# Electron + Vue 通用
+node_modules/    # 依赖目录
+dist/            # 构建输出目录（Vue/Electron 通用）
+out/             # Electron 编译输出目录
+release-builds/  # Electron 打包发布目录
+.nuxt/           # Nuxt.js 生成目录（如果使用 Nuxt）
+.cache/          # 开发缓存目录
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log            # 通用日志文件
 
-# Go workspace file
-go.work
-go.work.sum
+# ================
+# 开发环境/IDE
+# ================
+# 编辑器/IDE 配置
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?            # Vim 临时文件
 
-# env file
-.env
+# 系统文件
+.DS_Store        # macOS 属性文件
+Thumbs.db        # Windows 缩略图缓存
+ehthumbs*.db     # Windows 旧版缩略图缓存
+
+# ================
+# 环境变量
+# ================
+.env.local       # 本地环境文件
+.env.*.local     # 其他本地环境文件
+*.env            # 通用环境文件（按需启用）
+
+# ================
+# 其他通用规则
+# ================
+# 临时文件
+*.tmp
+*.bak
+
+# Electron 打包文件
+*.asar
+
+# 调试文件
+debug
