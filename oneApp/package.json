@@ -1,0 +1,22 @@
+{
+  "name": "package.json",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "chcp 65001 && vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "electron": "^35.0.0",
+    "electron-store": "^10.0.1",
+    "vite": "^6.2.0",
+    "vite-plugin-electron": "^0.29.0"
+  }
+}
