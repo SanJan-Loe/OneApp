@@ -21,6 +21,7 @@ export const useCondaEnvStore = defineStore('condaEnv', {
         console.error('Failed to load conda envs:', error)
         throw error
       } finally {
+        
         this.isLoading = false
       }
     },

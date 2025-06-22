@@ -15,6 +15,7 @@ const closeDialog = () => {
   emit('close')
 }
 
+
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
 }
