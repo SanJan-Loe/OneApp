@@ -1,0 +1,297 @@
+/* 窗口控制样式 */
+.drag-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  -webkit-app-region: drag;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 10px;
+  background-color: #f8f9fa;
+  z-index: 1000;
+}
+
+.window-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.control-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+  background-color: #e9ecef;
+}
+
+.control-btn.close:hover {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+/* 侧边栏样式 */
+.sidebar {
+  width: 180px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 25px 0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.nav-item {
+  padding: 14px 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 5px 10px;
+  border-radius: 8px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background-color: #e9ecef;
+  color: #212529;
+}
+
+.nav-item.active {
+  background-color: #74c69d;
+  color: white;
+  box-shadow: 0 2px 8px rgba(116, 198, 157, 0.3);
+}
+
+/* 主内容区样式 */
+.env-selector {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  z-index: 100;
+}
+
+.current-env {
+  padding: 10px 18px;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.current-env:hover:not(.disabled) {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.current-env.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-radius: 50%;
+  border-top-color: #74c69d;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.arrow {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.current-env:hover .arrow {
+  transform: translateY(1px);
+}
+
+.env-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.env-item {
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.env-item:hover {
+  background-color: #f8f9fa;
+  color: #74c69d;
+}
+
+.webui-button {
+  padding: 12px 24px;
+  background-color: #74c69d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 25px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(116, 198, 157, 0.3);
+}
+
+.webui-button:hover {
+  background-color: #5db58a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(116, 198, 157, 0.4);
+}
+
+/* 日志窗口样式 */
+.log-window {
+  height: 100%;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.log-container {
+  height: calc(100% - 50px);
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  padding: 15px;
+  margin-top: 15px;
+  background-color: white;
+  border-radius: 8px;
+}
+
+.log-entry {
+  margin-bottom: 8px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.log-entry:hover {
+  background-color: #f8f9fa;
+}
+
+.timestamp {
+  color: #868e96;
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.error-message {
+  position: fixed;
+  top: 40px;
+  right: 20px;
+  padding: 12px 20px;
+  background-color: #ff6b6b;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* WebUI窗口样式 */
+.webui-window {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.webui-controls {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.service-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.service-button.start {
+  background-color: #74c69d;
+  color: white;
+  box-shadow: 0 2px 8px rgba(116, 198, 157, 0.3);
+}
+
+.service-button.start:hover {
+  background-color: #5db58a;
+  transform: translateY(-1px);
+}
+
+.service-button.stop {
+  background-color: #ff6b6b;
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.service-button.stop:hover {
+  background-color: #ff5252;
+  transform: translateY(-1px);
+}
+
+.status-indicator {
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status-indicator.running {
+  background-color: #ebfbee;
+  color: #2b8a3e;
+}
+
+.status-indicator.stopped {
+  background-color: #fff5f5;
+  color: #c92a2a;
+}
+
+.webui-view {
+  flex: 1;
+  border: none;
+  background-color: white;
+}
