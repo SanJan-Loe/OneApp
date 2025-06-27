@@ -21,6 +21,10 @@ const emit = defineEmits([
 const addLog = (message) => {
   emit('addLog', message)
 }
+
+const onWebviewReady = () => {
+  addLog('Webview DOM已准备就绪')
+}
 </script>
 
 <template>
@@ -111,6 +115,7 @@ const addLog = (message) => {
         allowpopups
         @did-fail-load="addLog(`Webview加载失败: ${$event.errorDescription}`)"
         @did-finish-load="addLog('Webview加载完成')"
+        @dom-ready="onWebviewReady"
       ></webview>
     </div>
   </div>

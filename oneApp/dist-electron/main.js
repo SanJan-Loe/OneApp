@@ -63,6 +63,10 @@ function createMainWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
+      webviewTag: true,
+      nodeIntegrationInSubFrames: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true,
       preload: path.resolve(__dirname, "preload.js")
     },
     show: false
