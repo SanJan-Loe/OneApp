@@ -1,27 +1,24 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import type { CondaEnv } from '@/types/index.ts'
 import { useCondaEnvStore } from '@/stores/condaEnv'
+import useLogger from '@/composables/useLogger'
 import WindowControls from '@/components/WindowControls.vue'
 import Sidebar from '@/components/Sidebar.vue'
 import MainContent from '@/components/MainContent.vue'
 import ErrorDialog from '@/components/ErrorDialog.vue'
 
 // 窗口状态
-const activeWindow = ref('main')
-const logs = ref([])
-const webUIStatus = ref('stopped')
+const activeWindow = ref<'main' | 'webui'>('main')
+const webUIStatus = ref<'stopped' | 'running' | 'loading' | 'port-in-use'>('stopped')
 
-// 添加日志
-const addLog = (message) => {
-  logs.value.push({
-    timestamp: new Date().toLocaleTimeString(),
-    message
-  })
-}
+// 使用日志composable
+const { logs, addLog } = useLogger()
 
 // 检查webui服务状态
-const checkWebUIStatus = async () => {
-  webUIStatus.value = await window.electronAPI.getWebUIStatus()
+const checkWebUIStatus = async (): Promise<'stopped' | 'running' | 'loading' | 'port-in-use'> => {
+  const status = await window.electronAPI.getWebUIStatus()
+  webUIStatus.value = status as 'stopped' | 'running' | 'loading' | 'port-in-use'
   return webUIStatus.value
 }
 
@@ -35,17 +32,15 @@ const launchWebUI = async () => {
     
     // 获取环境路径
     const env = condaEnvStore.currentEnv
-    const envPath = env.path || env
+    const envPath = typeof env === 'object' ? env.path : env
     const envName = typeof env === 'object' ? env.name : env
+    const launchParams = typeof env === 'object' ? env : { path: env, name: env }
     
     // 日志记录
     addLog(`正在启动Open-WebUI (环境: ${envName})...`)
     
     // 调用electronAPI
-    const result = await window.electronAPI.launchWebUI({
-      path: envPath,
-      name: envName
-    })
+    const result = await window.electronAPI.launchWebUI(launchParams)
     
     // 结果处理
     if (result) {
@@ -54,8 +49,9 @@ const launchWebUI = async () => {
     } else {
       throw new Error('启动失败，未知错误')
     }
-  } catch (error) {
-    envError.value = `启动Open-WebUI失败: ${error.message}`
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    envError.value = `启动Open-WebUI失败: ${message}`
     showErrorDialog.value = true
     addLog(envError.value)
   }
@@ -64,25 +60,10 @@ const launchWebUI = async () => {
 // Conda环境功能
 const condaEnvStore = useCondaEnvStore()
 const showEnvList = ref(false)
-
-onMounted(async () => {
-  try {
-    addLog('Initializing conda environments...')
-    await condaEnvStore.init()
-    addLog(`Current conda env: ${condaEnvStore.currentEnv}`)
-
-    // 设置WebUI日志监听
-    window.electronAPI.onWebUILog((message) => {
-      addLog(`[WebUI] ${message}`)
-    })
-  } catch (error) {
-    addLog(`Failed to initialize conda envs: ${error.message}`)
-  }
-})
-
-const envCache = ref([])
-const envError = ref(null)
+const envError = ref<string | null>(null)
 const showErrorDialog = ref(false)
+
+const envCache = ref<CondaEnv[]>([])
 
 // 加载并缓存所有conda环境
 const loadEnvironments = async () => {
@@ -91,14 +72,15 @@ const loadEnvironments = async () => {
     await condaEnvStore.loadCurrentEnv()
     addLog(`Loaded ${condaEnvStore.envs.length} conda environments`)
     addLog(`Current env: ${condaEnvStore.currentEnv}`)
-  } catch (error) {
-    envError.value = '加载conda环境失败'
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    envError.value = `加载conda环境失败: ${message}`
     showErrorDialog.value = true
-    addLog(`Environment load error: ${error.message}`)
+    addLog(`Environment load error: ${message}`)
   }
 }
 
-const selectEnv = async (env) => {
+const selectEnv = async (env: string | CondaEnv) => {
   if (condaEnvStore.isLoading) return
   
   try {
@@ -107,15 +89,13 @@ const selectEnv = async (env) => {
     showEnvList.value = false
     addLog(`成功切换到 ${env}`)
     envError.value = null
-  } catch (error) {
-    envError.value = `无法切换到 ${env}: ${error.message}`
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    envError.value = `无法切换到 ${env}: ${message}`
     showErrorDialog.value = true
     addLog(envError.value)
   }
 }
-
-// 初始化加载环境
-onMounted(loadEnvironments)
 
 // Open-WebUI窗口处理
 const openWebUIWindow = async () => {
@@ -127,6 +107,38 @@ const openWebUIWindow = async () => {
     activeWindow.value = 'main'
   }
 }
+
+// 合并后的初始化逻辑
+onMounted(async () => {
+  try {
+    addLog('Initializing application...')
+    
+    // 初始化conda环境
+    await condaEnvStore.init()
+    addLog(`Initialized conda env: ${condaEnvStore.currentEnv}`)
+    
+    // 加载环境列表
+    await condaEnvStore.loadEnvs()
+    await condaEnvStore.loadCurrentEnv()
+    addLog(`Loaded ${condaEnvStore.envs.length} conda environments`)
+    addLog(`Current env: ${condaEnvStore.currentEnv}`)
+    
+    // 检查WebUI状态
+    await checkWebUIStatus()
+    
+    // 设置WebUI日志监听
+    window.electronAPI.onWebUILog((message) => {
+      addLog(`[WebUI] ${message}`)
+    })
+    
+    addLog('Application initialized successfully')
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    envError.value = `初始化失败: ${message}`
+    showErrorDialog.value = true
+    addLog(`Initialization error: ${message}`)
+  }
+})
 
 // 切换WebUI服务状态
 const toggleWebUIService = async () => {
@@ -141,33 +153,19 @@ const toggleWebUIService = async () => {
       addLog('Open-WebUI service started')
     }
     await checkWebUIStatus()
-  } catch (error) {
-    envError.value = `WebUI服务错误: ${error.message}`
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    envError.value = `WebUI服务错误: ${message}`
     showErrorDialog.value = true
-    addLog(`WebUI service error: ${error.message}`)
+    addLog(`WebUI service error: ${message}`)
   }
 }
-
-// 初始化检查服务状态
-onMounted(async () => {
-  try {
-    addLog('Loading conda environments...')
-    await condaEnvStore.loadEnvs()
-    await condaEnvStore.loadCurrentEnv()
-    addLog(`Current conda env: ${condaEnvStore.currentEnv}`)
-    await checkWebUIStatus()
-  } catch (error) {
-    envError.value = `获取conda环境失败: ${error.message}`
-    showErrorDialog.value = true
-    addLog(`Failed to get conda envs: ${error.message}`)
-  }
-})
 </script>
 
 <template>
   <div class="app-container">
-    <ErrorDialog 
-      :message="envError" 
+    <ErrorDialog
+      :message="envError"
       :visible="showErrorDialog"
       @close="showErrorDialog = false"
     />

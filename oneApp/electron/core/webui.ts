@@ -1,27 +1,35 @@
-import { exec } from 'child_process'
-import { writeLog } from './logger.js'
+import { exec, type ChildProcess } from 'child_process'
+import { writeLog } from './logger'
+import type { BrowserWindow } from 'electron'
 
-let webuiProcess = null
-let mainWindow = null
+// WebUI进程状态
+let webuiProcess: ChildProcess | null = null
+let mainWindow: BrowserWindow | null = null
 
-export const setMainWindow = (window) => {
+// WebUI启动参数
+interface WebUILaunchParams {
+    path: string
+    name?: string
+}
+
+export const setMainWindow = (window: BrowserWindow): void => {
     mainWindow = window
 }
 
 // 启动WebUI服务
-export const startWebUIService = async (env) => {
+export const startWebUIService = async (env: WebUILaunchParams): Promise<string> => {
     return new Promise((resolve, reject) => {
         try {
             // 如果已有进程在运行，先终止
             if (webuiProcess) {
-                webuiProcess.kill()
+                webuiProcess.kill() // 忽略返回值
             }
 
-            if (!env || !env.path) {
+            if (!env?.path) {
                 throw new Error('Invalid environment object - missing path property')
             }
 
-            console.log(`Starting WebUI service with environment: ${env.name} (${env.path})`)
+            console.log(`Starting WebUI service with environment: ${env.name || 'unknown'} (${env.path})`)
 
             const isWindows = process.platform === 'win32'
             const activateCmd = isWindows 
@@ -31,7 +39,7 @@ export const startWebUIService = async (env) => {
             webuiProcess = exec(`${activateCmd}open-webui serve`, 
                 { 
                     maxBuffer: 1024 * 1024,
-                    shell: true,
+                    shell: "true",
                     windowsHide: false
                 },
                 (error, stdout, stderr) => {
@@ -45,21 +53,17 @@ export const startWebUIService = async (env) => {
             )
 
             // 转发stdout到渲染进程并写入日志
-            webuiProcess.stdout.on('data', (data) => {
+            webuiProcess.stdout?.on('data', (data) => {
                 const logMessage = data.toString()
                 writeLog(`[WebUI] ${logMessage}`)
-                if (mainWindow) {
-                    mainWindow.webContents.send('webui-log', logMessage)
-                }
+                mainWindow?.webContents.send('webui-log', logMessage)
             })
 
             // 转发stderr到渲染进程并写入日志
-            webuiProcess.stderr.on('data', (data) => {
+            webuiProcess.stderr?.on('data', (data) => {
                 const logMessage = data.toString()
                 writeLog(`[WebUI-ERROR] ${logMessage}`)
-                if (mainWindow) {
-                    mainWindow.webContents.send('webui-log', `[ERROR] ${logMessage}`)
-                }
+                mainWindow?.webContents.send('webui-log', `[ERROR] ${logMessage}`)
             })
 
             // 进程退出时清理
@@ -69,14 +73,15 @@ export const startWebUIService = async (env) => {
             })
 
         } catch (error) {
-            writeLog(`WebUI service error: ${error.message}`)
-            reject(error.message || '启动WebUI失败')
+            const err = error as Error
+            writeLog(`WebUI service error: ${err.message}`)
+            reject(err.message || '启动WebUI失败')
         }
     })
 }
 
 // 停止WebUI服务
-export const stopWebUIService = async () => {
+export const stopWebUIService = async (): Promise<string> => {
     return new Promise((resolve) => {
         if (webuiProcess) {
             // 强制终止进程树
@@ -112,11 +117,11 @@ export const stopWebUIService = async () => {
 }
 
 // 获取WebUI服务状态
-export const getWebUIStatus = async () => {
+export const getWebUIStatus = async (): Promise<'running' | 'stopped' | 'port-in-use' | 'loading'> => {
     return new Promise((resolve) => {
         resolve('loading') // 先返回loading状态
         
-        const checkStatus = (callback) => {
+        const checkStatus = (callback: (status: 'running' | 'stopped' | 'port-in-use') => void) => {
             // 首先检查进程是否存活
             if (webuiProcess) {
                 callback('running')
