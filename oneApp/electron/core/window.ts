@@ -18,8 +18,8 @@ export function createMainWindow(): BrowserWindow {
         frame: false,
         titleBarStyle: 'hidden',
         titleBarOverlay: {
-            color: '#f8f9fa',
-            symbolColor: '#495057',
+            color: 'transparent',
+            symbolColor: '#495057', 
             height: 30
         },
         webPreferences: {

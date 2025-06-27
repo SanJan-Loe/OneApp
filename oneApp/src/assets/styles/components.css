@@ -10,7 +10,7 @@
   justify-content: flex-end;
   align-items: center;
   padding-right: 10px;
-  background-color: #f8f9fa;
+  background-color: transparent;
   z-index: 1000;
 }
 

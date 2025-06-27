@@ -56,7 +56,7 @@ function createMainWindow() {
     frame: false,
     titleBarStyle: "hidden",
     titleBarOverlay: {
-      color: "#f8f9fa",
+      color: "transparent",
       symbolColor: "#495057",
       height: 30
     },
