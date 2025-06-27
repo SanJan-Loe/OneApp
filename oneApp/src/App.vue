@@ -110,34 +110,46 @@ const openWebUIWindow = async () => {
 
 // 合并后的初始化逻辑
 onMounted(async () => {
-  try {
-    addLog('Initializing application...')
-    
-    // 初始化conda环境
-    await condaEnvStore.init()
-    addLog(`Initialized conda env: ${condaEnvStore.currentEnv}`)
-    
-    // 加载环境列表
-    await condaEnvStore.loadEnvs()
-    await condaEnvStore.loadCurrentEnv()
-    addLog(`Loaded ${condaEnvStore.envs.length} conda environments`)
-    addLog(`Current env: ${condaEnvStore.currentEnv}`)
-    
-    // 检查WebUI状态
-    await checkWebUIStatus()
-    
-    // 设置WebUI日志监听
-    window.electronAPI.onWebUILog((message) => {
-      addLog(`[WebUI] ${message}`)
-    })
-    
-    addLog('Application initialized successfully')
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    envError.value = `初始化失败: ${message}`
-    showErrorDialog.value = true
-    addLog(`Initialization error: ${message}`)
-  }
+    try {
+        addLog('Initializing application...')
+        
+        // 初始化conda环境
+        await condaEnvStore.init()
+        addLog(`Initialized conda env: ${condaEnvStore.currentEnv}`)
+        
+        // 加载环境列表
+        await condaEnvStore.loadEnvs()
+        await condaEnvStore.loadCurrentEnv()
+        addLog(`Loaded ${condaEnvStore.envs.length} conda environments`)
+        addLog(`Current env: ${condaEnvStore.currentEnv}`)
+        
+        // 检查WebUI状态
+        await checkWebUIStatus()
+        
+        // 设置WebUI日志监听
+        window.electronAPI.onWebUILog((message) => {
+            addLog(`[WebUI] ${message}`)
+        })
+
+        // 添加WebUI状态变化监听
+        window.electronAPI.onWebUIStatusChanged((status: 'stopped' | 'running' | 'loading' | 'port-in-use') => {
+            webUIStatus.value = status
+            if (status === 'running') {
+                addLog('WebUI服务状态更新: 运行中')
+            } else if (status === 'stopped') {
+                addLog('WebUI服务状态更新: 已停止')
+            } else if (status === 'port-in-use') {
+                addLog('WebUI服务状态更新: 端口被占用')
+            }
+        })
+        
+        addLog('Application initialized successfully')
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        envError.value = `初始化失败: ${message}`
+        showErrorDialog.value = true
+        addLog(`Initialization error: ${message}`)
+    }
 })
 
 // 切换WebUI服务状态

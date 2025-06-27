@@ -275,27 +275,26 @@ const stopWebUIService = async () => {
 };
 const getWebUIStatus = async () => {
   return new Promise((resolve) => {
-    resolve("loading");
     const checkStatus = (callback) => {
       if (webuiProcess) {
         callback("running");
         return;
       }
       const isWindows = process.platform === "win32";
-      const cmd = isWindows ? "netstat -ano | findstr 8080" : "lsof -i :8080 -t";
+      const cmd = isWindows ? `netstat -ano | findstr :8080 | findstr LISTENING` : "lsof -i :8080 -t";
       child_process.exec(cmd, (error, stdout) => {
         if (error || !stdout.trim()) {
           callback("stopped");
         } else {
-          const pid = isWindows ? stdout.split(/\s+/).pop() : stdout.trim();
+          if (isWindows) {
+            callback("running");
+            return;
+          }
+          const pid = stdout.trim();
           child_process.exec(
-            isWindows ? `tasklist /FI "PID eq ${pid}" | findstr /i "open-webui"` : `ps -p ${pid} -o comm= | grep -i open-webui`,
+            `ps -p ${pid} -o comm= | grep -i open-webui`,
             (error2, stdout2) => {
-              if (error2 || !stdout2) {
-                callback("port-in-use");
-              } else {
-                callback("running");
-              }
+              callback(error2 || !stdout2 ? "port-in-use" : "running");
             }
           );
         }
@@ -304,13 +303,11 @@ const getWebUIStatus = async () => {
     checkStatus((status) => {
       if (status === "running") {
         writeLog("WebUI service is running");
-        resolve(status);
+        mainWindow$1 == null ? void 0 : mainWindow$1.webContents.send("webui-status-changed", "running");
       } else if (status === "port-in-use") {
         writeLog("Port 8080 is in use by another process");
-        resolve("port-in-use");
-      } else {
-        setTimeout(() => checkStatus(resolve), 1e3);
       }
+      resolve(status);
     });
   });
 };

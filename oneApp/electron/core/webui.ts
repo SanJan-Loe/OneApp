@@ -119,8 +119,6 @@ export const stopWebUIService = async (): Promise<string> => {
 // 获取WebUI服务状态
 export const getWebUIStatus = async (): Promise<'running' | 'stopped' | 'port-in-use' | 'loading'> => {
     return new Promise((resolve) => {
-        resolve('loading') // 先返回loading状态
-        
         const checkStatus = (callback: (status: 'running' | 'stopped' | 'port-in-use') => void) => {
             // 首先检查进程是否存活
             if (webuiProcess) {
@@ -128,47 +126,41 @@ export const getWebUIStatus = async (): Promise<'running' | 'stopped' | 'port-in
                 return
             }
 
-            // 然后检查端口是否被占用
+            // 改进的端口检测逻辑
             const isWindows = process.platform === 'win32'
             const cmd = isWindows 
-                ? 'netstat -ano | findstr 8080' 
+                ? `netstat -ano | findstr :8080 | findstr LISTENING`
                 : 'lsof -i :8080 -t'
             
             exec(cmd, (error, stdout) => {
                 if (error || !stdout.trim()) {
                     callback('stopped')
                 } else {
-                    // 进一步验证是否是我们的进程
-                    const pid = isWindows 
-                        ? stdout.split(/\s+/).pop()
-                        : stdout.trim()
+                    // Windows平台直接通过端口检测
+                    if (isWindows) {
+                        callback('running')
+                        return
+                    }
                     
-                    exec(isWindows 
-                        ? `tasklist /FI "PID eq ${pid}" | findstr /i "open-webui"`
-                        : `ps -p ${pid} -o comm= | grep -i open-webui`, 
+                    // 其他平台验证进程名
+                    const pid = stdout.trim()
+                    exec(`ps -p ${pid} -o comm= | grep -i open-webui`, 
                     (error, stdout) => {
-                        if (error || !stdout) {
-                            callback('port-in-use')
-                        } else {
-                            callback('running')
-                        }
+                        callback(error || !stdout ? 'port-in-use' : 'running')
                     })
                 }
             })
         }
 
-        // 首次检查
+        // 立即检查状态，不再返回loading
         checkStatus((status) => {
             if (status === 'running') {
                 writeLog('WebUI service is running')
-                resolve(status)
+                mainWindow?.webContents.send('webui-status-changed', 'running')
             } else if (status === 'port-in-use') {
                 writeLog('Port 8080 is in use by another process')
-                resolve('port-in-use')
-            } else {
-                // 二次验证
-                setTimeout(() => checkStatus(resolve), 1000)
             }
+            resolve(status)
         })
     })
 }
